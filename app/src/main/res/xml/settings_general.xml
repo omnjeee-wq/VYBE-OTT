@@ -83,10 +83,10 @@
         <Preference
             android:icon="@drawable/ic_github_logo"
             android:title="@string/github"
-            app:summary="https://github.com/recloudstream/cloudstream">
+            app:summary="https://github.com/omnjeee-wq/VYBE-OTT">
             <intent
                 android:action="android.intent.action.VIEW"
-                android:data="https://github.com/recloudstream/cloudstream" />
+                android:data="https://github.com/omnjeee-wq/VYBE-OTT" />
         </Preference>
 
         <Preference
@@ -98,12 +98,12 @@
                 android:data="https://github.com/LagradOst/QuickNovel" />
         </Preference>
         <Preference
-            android:icon="@drawable/ic_baseline_discord_24"
-            android:title="@string/discord"
-            app:summary="https://discord.gg/5Hus6fM">
+            android:icon="@drawable/ic_baseline_description_24"
+            android:title="@string/vybe_telegram"
+            app:summary="https://t.me/VyomaOfficial">
             <intent
                 android:action="android.intent.action.VIEW"
-                android:data="https://discord.gg/5Hus6fM" />
+                android:data="https://t.me/VyomaOfficial" />
         </Preference>
         <Preference
             android:icon="@drawable/baseline_description_24"
