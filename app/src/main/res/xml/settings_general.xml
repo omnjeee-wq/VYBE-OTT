@@ -98,7 +98,7 @@
                 android:data="https://github.com/LagradOst/QuickNovel" />
         </Preference>
         <Preference
-            android:icon="@drawable/ic_baseline_description_24"
+            android:icon="@drawable/baseline_description_24"
             android:title="@string/vybe_telegram"
             app:summary="https://t.me/VyomaOfficial">
             <intent
