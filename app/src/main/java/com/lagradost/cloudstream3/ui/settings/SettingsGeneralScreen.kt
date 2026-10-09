@@ -53,26 +53,23 @@ object SettingsGeneralScreen : SearchableSettings {
     override fun getPreferences(): List<Preference> {
         val settings = rememberAppSettings()
 
-        // TODO Refactor entirely to use a different file path selector ect like QuickNovel
         val selectFileSelector =
-            rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-                // It lies, it can be null if file manager quits.
+            rememberLauncherForActivityResult(
+                ActivityResultContracts.OpenDocumentTree()
+            ) { uri ->
                 if (uri == null) return@rememberLauncherForActivityResult
                 val context = CloudStreamApp.context ?: return@rememberLauncherForActivityResult
 
                 try {
                     val settings = AppSettings(context)
-                    // RW perms for the path
                     val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION
 
                     context.contentResolver.takePersistableUriPermission(uri, flags)
 
                     val filePath = SafeFile.fromUri(context, uri)?.filePath()
                     println("Selected URI path: $uri - Full path: $filePath")
 
-                    // store the actual URI instead of the path due to permissions.
-                    // filePath should only be used for cosmetic purposes.
                     val visual = filePath ?: uri.toString()
                     settings.general.downloadPath.set(uri.toString())
                     settings.general.downloadPathVisual.set(visual)
@@ -81,9 +78,7 @@ object SettingsGeneralScreen : SearchableSettings {
                 }
             }
 
-        val bananas by settings.general.bananas.collectAsState()
         val downloadPathVisual by settings.general.downloadPathVisual.collectAsState()
-        //val downloadPath by settings.general.downloadPath.collectAsState()
 
         var isBatteryShown by remember { mutableStateOf(false) }
         val context = LocalContext.current
@@ -101,59 +96,69 @@ object SettingsGeneralScreen : SearchableSettings {
                 },
                 confirm = {
                     isBatteryShown = false
-                    // The og impl never modified it to true?
-                    // settings.general.batterOptimization.set(true)
                     context.showRequestIgnoreBatteryOptDialog()
                 }
             )
         }
 
-        val default = AllLanguagesName to stringResource(R.string.all_languages_preference)
+        val default = AllLanguagesName to
+            stringResource(R.string.all_languages_preference)
+
         val languages = APIHolder.apis.withLock {
             APIHolder.apis.map { api -> api.lang }.distinct()
         }.sortedBy { fromTagToLanguageName(it) ?: it }
 
         return persistentListOf(
-            Preference.PreferenceGroup(title = stringResource(R.string.extension_language), preferenceItems = persistentListOf(
-                Preference.PreferenceItem.ListPreference(
-                    preference = settings.general.locale,
-                    entries = appLanguages.associate { (name, code) -> (code to (name to code).nameNextToFlagEmoji()) },
-                    title = stringResource(R.string.app_language),
-                    icon = painterResource(R.drawable.language_korean_latin_24px),
-                    onValueChanged = { value ->
-                        settings.general.locale.set(value)
-                        activity?.recreate()
-                        return@ListPreference false
-                    },
-                    subtitleProvider = { v, e -> e[v] ?: getCurrentLocale(LocalContext.current) }
-                ),
-                Preference.PreferenceItem.MultiSelectListPreference(
-                    title = stringResource(R.string.provider_lang_settings),
-                    icon = painterResource(R.drawable.plugin_lang),
-                    entries = mapOf(default) + languages.associateWith { lang ->
-                        (getNameNextToFlagEmoji(
-                            lang
-                        ) ?: lang)
-                    },
-                    preference = settings.provider.extensionLanguages
-                ),
-                Preference.PreferenceItem.MultiSelectListPreference(
-                    title = stringResource(R.string.preferred_media_settings),
-                    icon = painterResource(R.drawable.movie_edit_24px),
-                    preference = settings.provider.preferredMedia,
-                    entries = TvType.entries.associate {
-                        it.ordinal.toString() to stringResource(it.toStringRes())
-                    }
-                        // Ok this looks strange af, but we do this to avoid double movie
-                        .toPersistentMap().remove(TvType.AnimeMovie.ordinal.toString()), onValueChanged = { diff ->
-                        if(diff.contains(TvType.Movie.ordinal.toString())) {
-                            settings.provider.preferredMedia.set(diff + TvType.AnimeMovie.ordinal.toString())
-                        } else {
-                            settings.provider.preferredMedia.set(diff - TvType.AnimeMovie.ordinal.toString())
+            Preference.PreferenceGroup(
+                title = stringResource(R.string.extension_language),
+                preferenceItems = persistentListOf(
+                    Preference.PreferenceItem.ListPreference(
+                        preference = settings.general.locale,
+                        entries = appLanguages.associate { (name, code) ->
+                            code to (name to code).nameNextToFlagEmoji()
+                        },
+                        title = stringResource(R.string.app_language),
+                        icon = painterResource(R.drawable.language_korean_latin_24px),
+                        onValueChanged = { value ->
+                            settings.general.locale.set(value)
+                            activity?.recreate()
+                            return@ListPreference false
+                        },
+                        subtitleProvider = { v, e ->
+                            e[v] ?: getCurrentLocale(LocalContext.current)
                         }
-                        return@MultiSelectListPreference false
-                    }),
-            )),
+                    ),
+                    Preference.PreferenceItem.MultiSelectListPreference(
+                        title = stringResource(R.string.provider_lang_settings),
+                        icon = painterResource(R.drawable.plugin_lang),
+                        entries = mapOf(default) + languages.associateWith { lang ->
+                            getNameNextToFlagEmoji(lang) ?: lang
+                        },
+                        preference = settings.provider.extensionLanguages
+                    ),
+                    Preference.PreferenceItem.MultiSelectListPreference(
+                        title = stringResource(R.string.preferred_media_settings),
+                        icon = painterResource(R.drawable.movie_edit_24px),
+                        preference = settings.provider.preferredMedia,
+                        entries = TvType.entries.associate {
+                            it.ordinal.toString() to stringResource(it.toStringRes())
+                        }.toPersistentMap()
+                            .remove(TvType.AnimeMovie.ordinal.toString()),
+                        onValueChanged = { diff ->
+                            if (diff.contains(TvType.Movie.ordinal.toString())) {
+                                settings.provider.preferredMedia.set(
+                                    diff + TvType.AnimeMovie.ordinal.toString()
+                                )
+                            } else {
+                                settings.provider.preferredMedia.set(
+                                    diff - TvType.AnimeMovie.ordinal.toString()
+                                )
+                            }
+                            return@MultiSelectListPreference false
+                        }
+                    )
+                )
+            ),
 
             Preference.PreferenceGroup(
                 title = stringResource(R.string.title_downloads),
@@ -163,25 +168,22 @@ object SettingsGeneralScreen : SearchableSettings {
                         subtitle = downloadPathVisual,
                         title = stringResource(R.string.download_path_pref),
                         onClick = {
-                            // This is not a ListPreference because the old selection system is
-                            // broken af. This needs to be refactored to QuickNovels download path
-                            // system.
                             selectFileSelector.launch(Uri.EMPTY)
-                        },
+                        }
                     ),
                     Preference.PreferenceItem.SliderPreference(
                         icon = painterResource(R.drawable.arrow_or_edge_24px),
                         preference = settings.general.parallelDownloads,
                         valueRange = 1..10,
                         title = stringResource(R.string.parallel_downloads),
-                        subtitle = stringResource(R.string.download_parallel_settings_des),
+                        subtitle = stringResource(R.string.parallel_downloads_settings_des)
                     ),
                     Preference.PreferenceItem.SliderPreference(
                         icon = painterResource(R.drawable.arrow_and_edge_24px),
                         preference = settings.general.concurrentConnections,
                         valueRange = 1..10,
                         title = stringResource(R.string.concurrent_connections),
-                        subtitle = stringResource(R.string.concurrent_connections_settings_des),
+                        subtitle = stringResource(R.string.concurrent_connections_settings_des)
                     ),
                     Preference.PreferenceItem.TextPreference(
                         title = stringResource(R.string.battery_dialog_title),
@@ -194,7 +196,7 @@ object SettingsGeneralScreen : SearchableSettings {
                                 showToast(R.string.app_unrestricted_toast)
                             }
                         }
-                    ),
+                    )
                 )
             ),
 
@@ -206,7 +208,6 @@ object SettingsGeneralScreen : SearchableSettings {
                         subtitle = stringResource(R.string.add_site_summary),
                         icon = painterResource(R.drawable.copy_all_24px),
                         onClick = {
-                            // TODO refactor into compose
                             if (SettingsGeneral.getCurrent().isEmpty()) {
                                 SettingsGeneral.showAdd()
                             } else {
@@ -219,17 +220,17 @@ object SettingsGeneralScreen : SearchableSettings {
                         subtitle = stringResource(R.string.dns_pref_summary),
                         icon = painterResource(R.drawable.dns_24px),
                         preference = settings.general.dns,
-                        entries = integerArrayResource(R.array.dns_pref_values).zip(
-                            stringArrayResource(R.array.dns_pref)
-                        ).toMap(),
+                        entries = integerArrayResource(R.array.dns_pref_values)
+                            .zip(stringArrayResource(R.array.dns_pref))
+                            .toMap(),
                         onValueChanged = {
-                            (CloudStreamApp.context)?.let { ctx ->
+                            CloudStreamApp.context?.let { ctx ->
                                 app.initClient(ctx, ignoreSSL = false)
                                 @OptIn(UnsafeSSL::class)
                                 insecureApp.initClient(ctx, ignoreSSL = true)
                             }
                             return@ListPreference true
-                        },
+                        }
                     ),
                     Preference.PreferenceItem.SwitchPreference(
                         title = stringResource(R.string.jsdelivr_proxy),
@@ -240,60 +241,12 @@ object SettingsGeneralScreen : SearchableSettings {
                 )
             ),
 
-            Preference.PreferenceGroup(
-                title = stringResource(R.string.pref_category_links),
-                preferenceItems = persistentListOf(
-                    Preference.PreferenceItem.TextPreference(
-                        title = stringResource(R.string.github),
-                        subtitle = "https://github.com/recloudstream/cloudstream",
-                        icon = painterResource(R.drawable.ic_github_logo),
-                        onClick = {
-                            CloudStreamApp.openBrowser("https://github.com/recloudstream/cloudstream")
-                        }
-                    ),
-                    Preference.PreferenceItem.TextPreference(
-                        title = stringResource(R.string.lightnovel),
-                        subtitle = "https://github.com/LagradOst/QuickNovel",
-                        icon = painterResource(R.drawable.quick_novel_icon),
-                        onClick = {
-                            CloudStreamApp.openBrowser("https://github.com/LagradOst/QuickNovel")
-                        }
-                    ),
-                    Preference.PreferenceItem.TextPreference(
-                        title = stringResource(R.string.discord),
-                        subtitle = "https://discord.gg/5Hus6fM",
-                        icon = painterResource(R.drawable.ic_baseline_discord_24),
-                        onClick = {
-                            CloudStreamApp.openBrowser("https://discord.gg/5Hus6fM")
-                        }
-                    ),
-                    Preference.PreferenceItem.TextPreference(
-                        title = stringResource(R.string.cs3wiki),
-                        subtitle = "https://cloudstream.miraheze.org/",
-                        icon = painterResource(R.drawable.description_24px),
-                        onClick = {
-                            CloudStreamApp.openBrowser("https://cloudstream.miraheze.org/")
-                        }
-                    ),
-                )
-            ),
-            Preference.PreferenceItem.TextPreference(
-                title = stringResource(R.string.benene),
-                subtitle = if (bananas == 0) {
-                    stringResource(R.string.benene_count_text_none)
-                } else {
-                    stringResource(R.string.benene_count_text, bananas)
-                },
-                onClick = {
-                    settings.general.bananas.set(bananas + 1)
-                },
-                icon = painterResource(R.drawable.benene),
-            ),
-            Preference.PreferenceItem.InfoPreference(title = stringResource(R.string.legal_notice_text)),
+            Preference.PreferenceItem.InfoPreference(
+                title = stringResource(R.string.legal_notice_text)
+            )
         )
     }
 }
-
 
 @PreviewLightDark
 @Composable
