@@ -176,7 +176,7 @@ object SettingsGeneralScreen : SearchableSettings {
                         preference = settings.general.parallelDownloads,
                         valueRange = 1..10,
                         title = stringResource(R.string.parallel_downloads),
-                        subtitle = stringResource(R.string.parallel_downloads_settings_des)
+                        subtitle = null
                     ),
                     Preference.PreferenceItem.SliderPreference(
                         icon = painterResource(R.drawable.arrow_and_edge_24px),
