@@ -156,13 +156,6 @@ object SettingsFragmentScreen : Screen {
                 R.string.pref_category_security
             )
         ),
-        SettingsNavigation(
-            title = R.string.pref_category_extensions,
-            navigation = R.id.action_navigation_global_to_navigation_settings_extensions,
-            screen = null,
-            icon = R.drawable.extension_24px,
-            subtitle = persistentListOf(R.string.add_repository)
-        ),
     )
 
     @Immutable
