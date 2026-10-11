@@ -910,6 +910,12 @@
                                 app:icon="@drawable/ic_outline_subtitles_24"
                                 tools:visibility="visible" />
 
+                             <com.google.android.material.button.MaterialButton
+                               android:id="@+id/player_cast_btt"
+                                style="@style/VideoButton"
+                               android:text="Cast"
+                               app:icon="@drawable/ic_cast_24" />
+                            
                             <com.google.android.material.button.MaterialButton
                                 android:id="@+id/player_sources_btt"
                                 style="@style/VideoButton"
