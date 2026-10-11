@@ -215,6 +215,10 @@ android {
 }
 
 dependencies {
+implementation("com.connectsdk:connect-sdk-android:1.6.0") {
+        exclude(group = "com.android.support")
+        exclude(group = "com.google.android.gms")
+    }
     // Testing
     testImplementation(libs.junit)
     testImplementation(libs.json)
