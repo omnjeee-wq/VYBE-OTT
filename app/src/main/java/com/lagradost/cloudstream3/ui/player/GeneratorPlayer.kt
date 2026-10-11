@@ -2251,8 +2251,8 @@ class GeneratorPlayer : FullScreenPlayer() {
             showToast("Is link ko headers lagte hain, TV pe fail ho sakta hai")
         }
         showToast("TV se connect ho raha hai, TV pe Allow dabao")
-        CastHelper.cast(tv, "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", "video/mp4", getPlayerVideoTitle()) { ok, err ->
-            if (ok) {
+        CastHelper.cast(tv, "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", "application/x-mpegURL", getPlayerVideoTitle()) { ok, err ->
+        if (ok) {
                 player.handleEvent(CSPlayerEvent.Pause)
                 if (pos > 5000) view?.postDelayed({ CastHelper.seek(pos) }, 4000)
             } else {
