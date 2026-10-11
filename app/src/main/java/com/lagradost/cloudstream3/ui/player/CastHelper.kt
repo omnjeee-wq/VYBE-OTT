@@ -38,9 +38,5 @@ object CastHelper {
         if (!started) return emptyList()
         return DiscoveryManager.getInstance().compatibleDevices.values.toList()
     }
-
-    fun cast(
-        target: ConnectableDevice,
-        url: String,
-        mime: String,
-        title: String,
+    fun cast(target: ConnectableDevice, url: String, mime: String, title: String, onResult: (Boolean, String?) -> Unit) {
+    
