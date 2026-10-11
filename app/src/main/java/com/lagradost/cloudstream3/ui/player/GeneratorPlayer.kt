@@ -2222,6 +2222,45 @@ class GeneratorPlayer : FullScreenPlayer() {
         uiReset()
     }
 
+    private fun showCastDialog() {
+        val ctx = context ?: return
+        val link = currentSelectedLink?.first
+        if (link == null) {
+            showToast("Downloaded file cast nahi ho sakti")
+            return
+        }
+        val tvs = CastHelper.devices()
+        if (tvs.isEmpty()) {
+            showToast("TV nahi mila. Phone aur TV same WiFi pe hain?")
+            return
+        }
+        val names = tvs.map { it.friendlyName ?: it.ipAddress ?: "LG TV" }.toTypedArray()
+        androidx.appcompat.app.AlertDialog.Builder(ctx)
+            .setTitle("Cast to TV")
+            .setItems(names) { _, i -> startCast(tvs[i], link) }
+            .show()
+    }
+
+    private fun startCast(
+        tv: com.connectsdk.device.ConnectableDevice,
+        link: ExtractorLink
+    ) {
+        val mime = if (link.type == ExtractorLinkType.M3U8) "application/x-mpegURL" else "video/mp4"
+        val pos = player.getPosition() ?: 0L
+        if (link.headers.isNotEmpty() || link.referer.isNotBlank()) {
+            showToast("Is link ko headers lagte hain, TV pe fail ho sakta hai")
+        }
+        showToast("TV se connect ho raha hai, TV pe Allow dabao")
+        CastHelper.cast(tv, link.url, mime, getPlayerVideoTitle()) { ok, err ->
+            if (ok) {
+                player.handleEvent(CSPlayerEvent.Pause)
+                if (pos > 5000) view?.postDelayed({ CastHelper.seek(pos) }, 4000)
+            } else {
+                showToast("Cast fail: $err")
+            }
+        }
+    }
+ 
     fun exitPlayer() {
         playerHostView?.exitFullscreen()
         player.release()
@@ -2308,6 +2347,9 @@ class GeneratorPlayer : FullScreenPlayer() {
             exitPlayer()
         }
 
+        context?.let { CastHelper.start(it) }
+        playerBinding?.playerCastBtt?.setOnClickListener { showCastDialog() }
+        
         playerBinding?.downloadHeader?.setOnClickListener {
             it?.isVisible = false
         }
