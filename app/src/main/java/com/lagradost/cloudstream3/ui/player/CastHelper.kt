@@ -10,6 +10,7 @@ import com.connectsdk.service.WebOSTVService
 import com.connectsdk.service.capability.MediaControl
 import com.connectsdk.service.capability.MediaPlayer
 import com.connectsdk.service.command.ServiceCommandError
+import com.connectsdk.service.DLNAService
 
 object CastHelper {
     private var started = false
@@ -23,7 +24,7 @@ object CastHelper {
         try {
             DiscoveryManager.init(ctx.applicationContext)
             val dm = DiscoveryManager.getInstance()
-            dm.registerDeviceService(WebOSTVService::class.java, SSDPDiscoveryProvider::class.java)
+            dm.registerDeviceService(DLNAService::class.java, SSDPDiscoveryProvider::class.java)
             dm.pairingLevel = DiscoveryManager.PairingLevel.ON
             dm.start()
             started = true
