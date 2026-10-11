@@ -11,7 +11,6 @@ import com.connectsdk.service.capability.MediaControl
 import com.connectsdk.service.capability.MediaPlayer
 import com.connectsdk.service.command.ServiceCommandError
 
-/** LG webOS TV casting via Connect SDK. Phone sirf URL bhejta hai, TV khud stream chalata hai. */
 object CastHelper {
     private var started = false
     private var device: ConnectableDevice? = null
@@ -19,7 +18,6 @@ object CastHelper {
 
     val isCasting: Boolean get() = mediaControl != null
 
-    /** Player khulte hi call karo, taaki button dabane tak TV discover ho chuka ho. */
     fun start(ctx: Context) {
         if (started) return
         try {
@@ -38,5 +36,73 @@ object CastHelper {
         if (!started) return emptyList()
         return DiscoveryManager.getInstance().compatibleDevices.values.toList()
     }
+
     fun cast(target: ConnectableDevice, url: String, mime: String, title: String, onResult: (Boolean, String?) -> Unit) {
-    
+        if (target.isConnected) {
+            device = target
+            launch(target, url, mime, title, onResult)
+            return
+        }
+        target.addListener(object : ConnectableDeviceListener {
+            override fun onDeviceReady(d: ConnectableDevice) {
+                device = d
+                launch(d, url, mime, title, onResult)
+            }
+
+            override fun onDeviceDisconnected(d: ConnectableDevice) {
+                if (device == d) {
+                    device = null
+                    mediaControl = null
+                }
+            }
+
+            override fun onPairingRequired(
+                d: ConnectableDevice,
+                s: DeviceService,
+                t: DeviceService.PairingType
+            ) {
+            }
+
+            override fun onCapabilityUpdated(
+                d: ConnectableDevice,
+                added: List<String>,
+                removed: List<String>
+            ) {
+            }
+
+            override fun onConnectionFailed(d: ConnectableDevice, e: ServiceCommandError) {
+                onResult(false, e.message)
+            }
+        })
+        target.connect()
+    }
+
+    private fun launch(d: ConnectableDevice, url: String, mime: String, title: String, onResult: (Boolean, String?) -> Unit) {
+        val mp = d.getCapability(MediaPlayer::class.java)
+        if (mp == null) {
+            onResult(false, "Is TV me media player support nahi mila")
+            return
+        }
+        mp.playMedia(url, mime, title, "", "", false, object : MediaPlayer.LaunchListener {
+            override fun onSuccess(obj: MediaPlayer.MediaLaunchObject) {
+                mediaControl = obj.mediaControl
+                onResult(true, null)
+            }
+
+            override fun onError(e: ServiceCommandError) {
+                onResult(false, e.message)
+            }
+        })
+    }
+
+    fun pause() { mediaControl?.pause(null) }
+    fun resume() { mediaControl?.play(null) }
+    fun seek(ms: Long) { mediaControl?.seek(ms, null) }
+
+    fun stop() {
+        mediaControl?.stop(null)
+        mediaControl = null
+        device?.disconnect()
+        device = null
+    }
+}
