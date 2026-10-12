@@ -1,3 +1,4 @@
+
 name: Build VYBE OTT APK
 
 on:
@@ -32,9 +33,14 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assemblePrereleaseDebug
 
+      - name: Rename APK
+        run: |
+          mv app/build/outputs/apk/prerelease/debug/app-prerelease-debug.apk app/build/outputs/apk/prerelease/debug/VYBE-Movies.apk
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VYBE-OTT-APK
-          path: app/build/outputs/apk/prerelease/debug/*.apk
+          name: VYBE-Movies
+          path: app/build/outputs/apk/prerelease/debug/VYBE-Movies.apk
           if-no-files-found: error
+          
